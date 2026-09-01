@@ -38,7 +38,7 @@ straight off the image in any editor.
 | field | meaning |
 |---|---|
 | `id` | used for the deep link, `/#contact` |
-| `object` | plain-English description of the thing in the photo (used for the alt text and the index) |
+| `object` | the subtitle shown under the name in the index, and the screen-reader description. Leave it identical to `label` and no subtitle is shown |
 | `label` | the word shown on hover |
 | `points` | the object's outline, `[[x,y], …]` — the clickable area is the polygon itself, not its bounding box. Use this for anything tilted, angled or irregular (the pen, the tin, the canvas) |
 | `rect` | `[x,y,w,h]`, for genuinely rectangular targets |
@@ -50,17 +50,20 @@ straight off the image in any editor.
 
 | object | goes to |
 |---|---|
-| Canvas of the woman at a laptop | CV at `/cv/` *(straight link)* |
-| iPad on the desk | Contact |
-| Red toy car | Cars |
-| Pen and stylus on the sill | Writing |
-| USB drive on the sill | GitHub *(straight link, opens in a new tab)* |
-| Small white frame | The McNeil Family Tree at `/family-tree/` *(straight link)* |
-| Far-left frame | Nate's Film Catalogue at `/films/` *(straight link)* |
-| Second frame from the left | Izzie's Coffee Shops at `/izzies-coffee/` *(straight link)* |
-| Upright headphone jack | Music |
-| Handmade wooden table | Making |
-| The window itself | Colophon |
+| Canvas of the woman at a laptop | CV at `/cv/` — *An interactive display of my career* |
+| Small white frame | The McNeil Family Tree at `/family-tree/` |
+| Far-left frame | Nate's Film Catalogue at `/films/` — *Nate as a baby* |
+| Second frame from the left | Izzie's Coffee Shops at `/izzies-coffee/` |
+| iPad on the desk | Books — Goodreads *(new tab)* |
+| Pen and stylus on the sill | Writing — Overleaf *(new tab)* |
+| USB drive on the sill | GitHub — @stuartmcneil *(new tab)* |
+| Upright headphone jack | Music — a panel: Discogs collection, Spotify playlist |
+| Red toy car | Cars *(panel, placeholder)* |
+| Handmade wooden table | Making *(panel, placeholder)* |
+| The window itself | Colophon *(panel)* |
+
+Everything on this site opens in the current tab; everything off it opens in a new one.
+Four objects still open a panel: Music, Cars, Making and the window.
 
 Eight objects are catalogued but dormant at the bottom of the array — the pilea plant, the
 playing-card tin, the sailboat painting, the bicycle card, the jade plant, the flowering

@@ -178,7 +178,7 @@
    Press E on the page to outline every shape and drag out new coordinates.
    ===================================================================== */
 const SPOTS = [
-  { id:'cv', object:'Canvas — woman at a laptop', label:'CV',
+  { id:'cv', object:'An interactive display of my career', label:'CV',
     href:'https://stuartmcneil.github.io/cv/',
     points:[[1600,345],[1919,296],[1919,702],[1527,628]] },
 
@@ -193,19 +193,15 @@ const SPOTS = [
     body:`<p>Cardiff, the bay and the Bristol Channel on a good day. The site is one
           photograph, one HTML file and no tracking. Source on GitHub.</p>` },
 
-  { id:'contact', object:'iPad on the desk', label:'Contact',
-    points:[[435,938],[725,967],[752,1000],[755,1081],[295,1081],[352,1002]],
-    kicker:'Say hello', title:'Contact',
-    body:`<ul>
-      <li><a href="mailto:activeincardiff@gmail.com"><b>Email</b><span>activeincardiff@gmail.com</span></a></li>
-      <li><a href="https://github.com/stuartmcneil" target="_blank" rel="noopener"><b>GitHub</b><span>@stuartmcneil</span></a></li>
-    </ul>` },
+  { id:'books', object:'My books on Goodreads', label:'Books',
+    href:'https://www.goodreads.com/review/list/91950832-stuart-mcneil?ref=nav_mybooks&shelf=read',
+    points:[[435,938],[725,967],[752,1000],[755,1081],[295,1081],[352,1002]] },
 
-  { id:'nate', object:'Far-left frame', label:'Nate',
+  { id:'nate', object:'Nate as a baby', label:'Nate',
     href:'https://stuartmcneil.github.io/films/',
     points:[[0,185],[160,197],[158,393],[0,395]] },
 
-  { id:'izzie', object:'Second frame from the left', label:'Izzie',
+  { id:'izzie', object:'Izzie', label:'Izzie',
     href:'https://stuartmcneil.github.io/izzies-coffee/',
     points:[[166,196],[293,203],[291,390],[164,388]] },
 
@@ -220,16 +216,16 @@ const SPOTS = [
           still on the list.</p>` },
 
   { id:'writing', object:'Pen and stylus on the sill', label:'Writing',
-    points:[[475,558],[715,608],[715,642],[475,592]],
-    kicker:'Notes and longer pieces', title:'Writing',
-    body:`<ul>
-      <li><a href="#" target="_blank" rel="noopener"><b>Coming soon</b><span>Replace these rows with real links.</span></a></li>
-    </ul>` },
+    href:'https://www.overleaf.com/',
+    points:[[475,558],[715,608],[715,642],[475,592]] },
 
   { id:'music', object:'Upright headphone jack', label:'Music',
     points:[[227,436],[243,436],[249,502],[219,502]],
     kicker:'What is playing', title:'Music',
-    body:`<p>Playlists, what is on repeat, anything you have recorded.</p>` },
+    body:`<ul>
+      <li><a href="https://www.discogs.com/user/stuartmcneil/collection" target="_blank" rel="noopener"><b>Discogs</b><span>My record collection.</span></a></li>
+      <li><a href="https://open.spotify.com/playlist/1mefKk4ZWyoGoSyIB8x7DB?si=15_-E9hXRdC9LGcHEr5RSA" target="_blank" rel="noopener"><b>Spotify</b><span>Current playlist.</span></a></li>
+    </ul>` },
 
   { id:'github', object:'USB drive on the sill', label:'GitHub',
     href:'https://github.com/stuartmcneil',
@@ -278,7 +274,8 @@ live.forEach(s => {
   const b = document.createElement('button');
   b.className = 'spot';
   b.dataset.id = s.id;
-  b.setAttribute('aria-label', (s.label || s.object) + ' — ' + s.object);
+  const name = s.label || s.object;
+  b.setAttribute('aria-label', name.toLowerCase() === s.object.toLowerCase() ? name : name + ' — ' + s.object);
   b.innerHTML = `<span class="hit"></span><span class="tag">${s.label || s.object}</span>`;
   b.addEventListener('click', () => s.href ? go(s.href) : openPanel(s.id));
   // the silhouette, as percentages of the button's own box
@@ -389,7 +386,7 @@ menuBtn.addEventListener('click', () => {
   document.getElementById('pTitle').textContent  = 'Index';
   document.getElementById('pBody').innerHTML =
     '<ul>' + live.map(s =>
-      `<li><a href="${s.href || '#' + s.id}"${s.href ? ' rel="noopener"' : ` data-jump="${s.id}"`}><b>${s.label || s.object}</b><span>${s.object}</span></a></li>`
+      `<li><a href="${s.href || '#' + s.id}"${s.href ? ' rel="noopener"' : ` data-jump="${s.id}"`}><b>${s.label || s.object}</b>${(s.label || '').toLowerCase() === s.object.toLowerCase() ? '' : `<span>${s.object}</span>`}</a></li>`
     ).join('') + '</ul>';
   document.body.classList.add('open');
   bindJumps();
