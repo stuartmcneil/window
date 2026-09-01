@@ -14,10 +14,10 @@ top-left corner, so they stay locked to their objects however the print is sized
 - Hovering (or keyboard-focusing) an object shows its name. No glow, no outline — the label is the only tell.
 - Clicking opens a panel. `Esc` or a click outside closes it.
 - Deep links work: `/#cv`, `/#contact`, and so on.
-- An **Index** caption sits in the mount's bottom margin, set small and grey like the note
-  pencilled under a print. Since hovering is the only way in, touch devices and screen
-  readers need it — it lists every live object. Delete the `#menuBtn` markup if you would
-  rather the page gave nothing away at all.
+- An **Index** caption sits small and white in the photograph's bottom-right corner. Since
+  hovering is the only way in, touch devices and screen readers need it — it lists every
+  live object. Delete the `#menuBtn` markup if you would rather the page gave nothing away
+  at all.
 
 Keyboard: `Tab` cycles the hotspots · `E` toggles edit mode.
 

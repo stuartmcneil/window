@@ -110,17 +110,18 @@
   #close:hover{background:rgba(255,255,255,.12)}
 
   /* ---------- index fallback (touch / screen readers) ----------
-     Set on the mount like the caption pencilled under a print. */
+     Set into the bottom-right corner of the photograph itself. JS puts it
+     there; the shadow keeps it legible over the light wood beneath. */
   #menuBtn{
-    position:absolute;z-index:30;right:0;bottom:0;
-    display:flex;align-items:center;justify-content:flex-end;
-    padding:0 .35em;margin:0;border:0;background:none;cursor:pointer;
-    font-family:inherit;font-size:clamp(8px,1.15vmin,12px);
-    letter-spacing:.22em;text-transform:uppercase;color:#8d8a83;
-    opacity:0;transition:opacity .8s var(--ease),color .3s var(--ease);
+    position:absolute;z-index:30;
+    padding:12px;margin:0;border:0;background:none;cursor:pointer;
+    font-family:inherit;font-size:clamp(7px,.85vmin,9px);line-height:1;
+    letter-spacing:.2em;text-transform:uppercase;
+    color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75), 0 0 10px rgba(0,0,0,.45);
+    opacity:0;transition:opacity .8s var(--ease);
   }
-  body.ready #menuBtn{opacity:1}
-  #menuBtn:hover,#menuBtn:focus-visible{color:#1c1b18;outline:none}
+  body.ready #menuBtn{opacity:.78}
+  body.ready #menuBtn:hover,body.ready #menuBtn:focus-visible{opacity:1;outline:none}
   #menuBtn:focus-visible{text-decoration:underline}
   body.open #menuBtn{opacity:0;pointer-events:none}
 
@@ -319,7 +320,12 @@ function place(){
   mount.style.width  = (dw + 2 * border) + 'px';
   mount.style.height = (dh + 2 * border) + 'px';
 
-  menuBtn.style.height = border + 'px';
+  // the index tucks into the photograph's bottom-right corner
+  const inset = Math.max(6, Math.round(dw * 0.008));
+  const pad = 12;                                    // padding, for a decent tap target
+  menuBtn.style.right  = (border + inset - pad) + 'px';
+  menuBtn.style.bottom = (border + inset - pad) + 'px';
+
   photo.style.left   = border + 'px';
   photo.style.top    = border + 'px';
   photo.style.width  = dw + 'px';
