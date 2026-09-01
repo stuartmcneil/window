@@ -13,7 +13,7 @@ top-left corner, so they stay locked to their objects however the print is sized
 - Nothing is visible at rest — no markers, no hints, no chrome.
 - Hovering (or keyboard-focusing) an object shows its name. No glow, no outline — the label is the only tell.
 - Clicking opens a panel. `Esc` or a click outside closes it.
-- Deep links work: `/#cv`, `/#contact`, and so on.
+- Deep links work: `/#contact`, `/#music`, and so on. An object with an `href` follows its link instead of opening a panel.
 - An **Index** caption sits small and white in the photograph's bottom-right corner. Since
   hovering is the only way in, touch devices and screen readers need it — it lists every
   live object. Delete the `#menuBtn` markup if you would rather the page gave nothing away
@@ -37,7 +37,7 @@ straight off the image in any editor.
 
 | field | meaning |
 |---|---|
-| `id` | used for the deep link, `/#cv` |
+| `id` | used for the deep link, `/#contact` |
 | `object` | plain-English description of the thing in the photo (used for the alt text and the index) |
 | `label` | the word shown on hover |
 | `points` | the object's outline, `[[x,y], …]` — the clickable area is the polygon itself, not its bounding box. Use this for anything tilted, angled or irregular (the pen, the tin, the canvas) |
@@ -50,7 +50,7 @@ straight off the image in any editor.
 
 | object | goes to |
 |---|---|
-| Canvas of the woman at a laptop | CV |
+| Canvas of the woman at a laptop | CV at `/cv/` *(straight link)* |
 | iPad on the desk | Contact |
 | Red toy car | Cars |
 | Pen and stylus on the sill | Writing |
@@ -69,7 +69,7 @@ one a `label` and a `body` and it wakes up.
 
 A panel can link to another panel rather than reloading the page — give the anchor a
 `data-jump="<id>"` attribute, as in `<a href="#music" data-jump="music">`. Nothing uses it
-at the moment: the three family frames each point at a site of their own.
+at the moment: the frames that would have needed it each point at a site of their own.
 
 **To find coordinates for a new object:** load the page, press `E`, then drag a box around
 the object. A `rect:` and a four-point `points:` line appear bottom-left in photo pixels,
