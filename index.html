@@ -195,10 +195,8 @@ const SPOTS = [
     </ul>` },
 
   { id:'nate', object:'Far-left frame', label:'Nate',
-    points:[[0,185],[160,197],[158,393],[0,395]],
-    kicker:'Family', title:'Nate',
-    body:`<p>Nate's corner. Add whatever belongs here — photographs, things he has made,
-          a page of his own.</p>` },
+    href:'https://stuartmcneil.github.io/films/',
+    points:[[0,185],[160,197],[158,393],[0,395]] },
 
   { id:'izzie', object:'Second frame from the left', label:'Izzie',
     points:[[166,196],[293,203],[291,390],[164,388]],
@@ -210,7 +208,7 @@ const SPOTS = [
     points:[[335,390],[520,378],[516,556],[340,570]],
     kicker:'The people in the frames', title:'Family',
     body:`<ul>
-      <li><a href="#nate" data-jump="nate"><b>Nate</b><span>Far-left frame.</span></a></li>
+      <li><a href="https://stuartmcneil.github.io/films/"><b>Nate</b><span>Nate's Film Catalogue.</span></a></li>
       <li><a href="#izzie" data-jump="izzie"><b>Izzie</b><span>Second frame along.</span></a></li>
     </ul>` },
 
@@ -261,6 +259,13 @@ SPOTS.forEach(s => {
   s.bw = Math.max(...xs) - s.bx; s.bh = Math.max(...ys) - s.by;
 });
 
+/* same-site links stay in this tab; anything off-site opens a new one */
+function go(href){
+  let sameSite = false;
+  try { sameSite = new URL(href, location.href).origin === location.origin; } catch (e) {}
+  if (sameSite) location.href = href; else window.open(href, '_blank', 'noopener');
+}
+
 /* ---------------- build ---------------- */
 const layer = document.getElementById('layer');
 const photo = document.getElementById('photo');
@@ -272,7 +277,7 @@ live.forEach(s => {
   b.dataset.id = s.id;
   b.setAttribute('aria-label', (s.label || s.object) + ' — ' + s.object);
   b.innerHTML = `<span class="hit"></span><span class="tag">${s.label || s.object}</span>`;
-  b.addEventListener('click', () => s.href ? window.open(s.href,'_blank','noopener') : openPanel(s.id));
+  b.addEventListener('click', () => s.href ? go(s.href) : openPanel(s.id));
   // the silhouette, as percentages of the button's own box
   b.querySelector('.hit').style.clipPath = 'polygon(' + s.pts.map(([x,y]) =>
     `${((x - s.bx) / s.bw * 100).toFixed(2)}% ${((y - s.by) / s.bh * 100).toFixed(2)}%`
@@ -360,7 +365,7 @@ document.getElementById('menuBtn').addEventListener('click', () => {
   document.getElementById('pTitle').textContent  = 'Index';
   document.getElementById('pBody').innerHTML =
     '<ul>' + live.map(s =>
-      `<li><a href="${s.href || '#' + s.id}"${s.href ? ' target="_blank" rel="noopener"' : ` data-jump="${s.id}"`}><b>${s.label || s.object}</b><span>${s.object}</span></a></li>`
+      `<li><a href="${s.href || '#' + s.id}"${s.href ? ' rel="noopener"' : ` data-jump="${s.id}"`}><b>${s.label || s.object}</b><span>${s.object}</span></a></li>`
     ).join('') + '</ul>';
   document.body.classList.add('open');
   bindJumps();
@@ -368,7 +373,10 @@ document.getElementById('menuBtn').addEventListener('click', () => {
 });
 
 /* deep links: site.com/#projects */
-if (location.hash) { const id = location.hash.slice(1); if (SPOTS.some(s => s.id === id)) openPanel(id); }
+if (location.hash) {
+  const s = SPOTS.find(v => v.id === location.hash.slice(1));
+  if (s && s.href) go(s.href); else if (s) openPanel(s.id);
+}
 
 /* ------------- editor: press E, then drag a box ------------- */
 const readout = document.getElementById('readout');
