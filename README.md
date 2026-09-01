@@ -1,1 +1,88 @@
-# window
+# stuartmcneil.github.io
+
+A single-photograph home page. The front page is the windowsill above my desk in Cardiff —
+no headings, no nav bar. The objects on the sill are the navigation.
+
+## How it works
+
+Everything lives in `index.html`: one photo, one stylesheet, one script, no dependencies,
+no tracking. Hotspots are invisible buttons positioned as **percentages of the photograph**,
+so they stay locked to their objects at any window size.
+
+- Nothing is visible at rest — no markers, no hints, no chrome.
+- Hovering (or keyboard-focusing) an object shows its name. No glow, no outline — the label is the only tell.
+- Clicking opens a panel. `Esc` or a click outside closes it.
+- Deep links work: `/#cv`, `/#contact`, and so on.
+- An **Index** button sits faintly in the bottom right. Since hovering is the only way in,
+  touch devices and screen readers need it — it lists every live object. Delete the
+  `#menuBtn` markup if you would rather the page gave nothing away at all.
+
+Keyboard: `Tab` cycles the hotspots · `E` toggles edit mode.
+
+## Editing the hotspots
+
+Open `index.html` and find the `SPOTS` array near the top of the `<script>`.
+
+```js
+{ id:'writing', object:'Pen and stylus on the sill', label:'Writing',
+  points:[[475,558],[715,608],[715,642],[475,592]],
+  kicker:'Notes and longer pieces', title:'Writing',
+  body:`<ul> … </ul>` },
+```
+
+Coordinates are **pixels of the original photograph** (1919 × 1081), so you can read them
+straight off the image in any editor.
+
+| field | meaning |
+|---|---|
+| `id` | used for the deep link, `/#cv` |
+| `object` | plain-English description of the thing in the photo (used for the alt text and the index) |
+| `label` | the word shown on hover |
+| `points` | the object's outline, `[[x,y], …]` — the clickable area is the polygon itself, not its bounding box. Use this for anything tilted, angled or irregular (the pen, the tin, the canvas) |
+| `rect` | `[x,y,w,h]`, for genuinely rectangular targets |
+| `kicker` `title` `body` | the panel's contents; `body` is raw HTML |
+| `href` | set this instead of `body` to link straight out. A link to somewhere on this same site opens in the current tab; anything off-site opens in a new one |
+| `target:null` | dormant — not hoverable, not clickable |
+
+### What is live
+
+| object | goes to |
+|---|---|
+| Canvas of the woman at a laptop | CV |
+| iPad on the desk | Contact |
+| Red toy car | Cars |
+| Pen and stylus on the sill | Writing |
+| USB drive on the sill | GitHub *(straight link, opens in a new tab)* |
+| Small white frame | Family → Nate's films / Izzie's coffee shops |
+| Far-left frame | Nate's Film Catalogue at `/films/` *(straight link)* |
+| Second frame from the left | Izzie's Coffee Shops at `/izzies-coffee/` *(straight link)* |
+| Upright headphone jack | Music |
+| Handmade wooden table | Making |
+| The window itself | Colophon |
+
+Eight objects are catalogued but dormant at the bottom of the array — the pilea plant, the
+playing-card tin, the sailboat painting, the bicycle card, the jade plant, the flowering
+cactus, the carved coaster and the cork trivet. Their outlines are already measured; give
+one a `label` and a `body` and it wakes up.
+
+A panel can link to another panel rather than reloading the page — give the anchor a
+`data-jump="<id>"` attribute, as in `<a href="#music" data-jump="music">`. The Family panel
+does not need it any more: both its rows are ordinary links, because Nate and Izzie each
+point at a page of their own.
+
+**To find coordinates for a new object:** load the page, press `E`, then drag a box around
+the object. A `rect:` and a four-point `points:` line appear bottom-left in photo pixels,
+ready to paste. For an angled object, drag a rough box, paste the `points:` line, then move
+the four corners onto the object — order them clockwise.
+
+## Running it locally
+
+```bash
+python3 -m http.server 8000   # then open http://localhost:8000
+```
+
+## Photograph
+
+`desk.jpg` (1919 × 1081) with a `desk.webp` served first where supported.
+Replacing the photo means re-measuring the hotspots — press `E` and drag. If the replacement
+is a different size, update `NAT_W` / `NAT_H` in the script to match.
