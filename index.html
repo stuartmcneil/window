@@ -29,14 +29,24 @@
   }
   @media (prefers-reduced-motion:reduce){ *{transition-duration:.01ms !important} }
 
-  /* ---------- stage ---------- */
+  /* ---------- stage ----------
+     The photograph sits smaller, inside a thick white mount, like a framed
+     print on the wall. JS sizes the mount; every hotspot is measured from
+     the photograph's own top-left corner, so the links follow it. */
   #stage{position:fixed;inset:0;overflow:hidden}
   #bg{
     position:absolute;inset:-6%;width:112%;height:112%;
-    object-fit:cover;filter:blur(30px) brightness(.5) saturate(.85);transform:scale(1.06);
+    object-fit:cover;filter:blur(34px) brightness(.34) saturate(.8);transform:scale(1.06);
   }
-  #photo{position:absolute;top:0;left:0;opacity:0;transition:opacity 1.1s var(--ease)}
-  body.ready #photo{opacity:1}
+  #mount{
+    position:absolute;background:#fdfdfb;border-radius:3px;
+    box-shadow:0 2px 4px rgba(0,0,0,.28), 0 26px 70px rgba(0,0,0,.55),
+               0 0 0 1px rgba(0,0,0,.10);
+    opacity:0;transform:scale(.985);
+    transition:opacity 1s var(--ease),transform 1s var(--ease);
+  }
+  body.ready #mount{opacity:1;transform:none}
+  #photo{position:absolute;display:block;box-shadow:0 0 0 1px rgba(0,0,0,.13)}
 
   /* ---------- hotspots ----------
      The button itself is inert; the clipped .hit inside it is the object's
@@ -99,18 +109,19 @@
   }
   #close:hover{background:rgba(255,255,255,.12)}
 
-  /* ---------- index fallback (touch / screen readers) ---------- */
+  /* ---------- index fallback (touch / screen readers) ----------
+     Set on the mount like the caption pencilled under a print. */
   #menuBtn{
-    position:fixed;z-index:30;right:max(1rem,env(safe-area-inset-right));bottom:max(1rem,env(safe-area-inset-bottom));
-    padding:.6rem .95rem;border-radius:999px;cursor:pointer;
-    background:rgba(12,14,18,.7);border:1px solid var(--edge);color:var(--ink);
-    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    font-size:12px;letter-spacing:.16em;text-transform:uppercase;
-    opacity:0;transform:translateY(8px);
-    transition:opacity .8s var(--ease),transform .8s var(--ease);
+    position:absolute;z-index:30;right:0;bottom:0;
+    display:flex;align-items:center;justify-content:flex-end;
+    padding:0 .35em;margin:0;border:0;background:none;cursor:pointer;
+    font-family:inherit;font-size:clamp(8px,1.15vmin,12px);
+    letter-spacing:.22em;text-transform:uppercase;color:#8d8a83;
+    opacity:0;transition:opacity .8s var(--ease),color .3s var(--ease);
   }
-  body.ready #menuBtn{opacity:.42;transform:none}
-  body.ready #menuBtn:hover,body.ready #menuBtn:focus-visible{opacity:1}
+  body.ready #menuBtn{opacity:1}
+  #menuBtn:hover,#menuBtn:focus-visible{color:#1c1b18;outline:none}
+  #menuBtn:focus-visible{text-decoration:underline}
   body.open #menuBtn{opacity:0;pointer-events:none}
 
   /* ---------- editor overlay (press E) ---------- */
@@ -129,14 +140,15 @@
 
 <div id="stage">
   <img id="bg" src="desk.jpg" alt="" aria-hidden="true">
+  <div id="mount">
   <picture>
     <source srcset="desk.webp" type="image/webp">
     <img id="photo" src="desk.jpg" alt="A sunlit windowsill above Cardiff: framed photographs of the family, houseplants, a pen, a USB drive, a small painting of a sailing boat, a handmade wooden table and a canvas of a woman at a laptop. The objects on the sill are the links on this page.">
   </picture>
-  <div id="layer"></div>
+    <div id="layer"></div>
+    <button id="menuBtn" aria-haspopup="dialog">Index</button>
+  </div>
 </div>
-
-<button id="menuBtn" aria-haspopup="dialog">Index</button>
 
 <div id="scrim"></div>
 <div id="panel" role="dialog" aria-modal="true" aria-labelledby="pTitle" tabindex="-1">
@@ -203,12 +215,8 @@ const SPOTS = [
     points:[[166,196],[293,203],[291,390],[164,388]] },
 
   { id:'family', object:'Small white frame', label:'Family',
-    points:[[335,390],[520,378],[516,556],[340,570]],
-    kicker:'The people in the frames', title:'Family',
-    body:`<ul>
-      <li><a href="https://stuartmcneil.github.io/films/"><b>Nate</b><span>Nate's Film Catalogue.</span></a></li>
-      <li><a href="https://stuartmcneil.github.io/izzies-coffee/"><b>Izzie</b><span>Izzie's Coffee Shops.</span></a></li>
-    </ul>` },
+    href:'https://stuartmcneil.github.io/family-tree/',
+    points:[[335,390],[520,378],[516,556],[340,570]] },
 
   { id:'cars', object:'Red toy car', label:'Cars',
     points:[[140,387],[246,399],[246,458],[215,478],[180,481],[45,481],[8,448],[8,420]],
@@ -266,6 +274,8 @@ function go(href){
 
 /* ---------------- build ---------------- */
 const layer = document.getElementById('layer');
+const mount = document.getElementById('mount');
+const menuBtn = document.getElementById('menuBtn');
 const photo = document.getElementById('photo');
 const live  = SPOTS.filter(s => s.target !== null);
 
@@ -285,25 +295,41 @@ live.forEach(s => {
 });
 
 /* ------------- fit + position ------------- */
+const clamp = (lo, v, hi) => Math.round(Math.max(lo, Math.min(hi, v)));
+
 function fit(){
-  const cw = innerWidth, ch = innerHeight;
-  const cover = (cw / ch) >= 1.2;                 // portrait phones letterbox instead
-  const scale = cover ? Math.max(cw/NAT_W, ch/NAT_H) : Math.min(cw/NAT_W, ch/NAT_H);
+  const cw = innerWidth, ch = innerHeight, min = Math.min(cw, ch);
+  const gap    = clamp(10, min * 0.035, 56);   // dark ground around the mount
+  const border = clamp(16, min * 0.048, 62);   // the white mount itself
+
+  const scale = Math.min((cw - 2*gap - 2*border) / NAT_W,
+                         (ch - 2*gap - 2*border) / NAT_H);
   const dw = NAT_W * scale, dh = NAT_H * scale;
-  return { scale, dw, dh, ox:(cw - dw)/2, oy:(ch - dh)/2 };
+  const mx = (cw - dw - 2*border) / 2, my = (ch - dh - 2*border) / 2;
+
+  // ox / oy are the photograph's top-left corner in page coordinates
+  return { scale, dw, dh, border, mx, my, ox: mx + border, oy: my + border };
 }
 
 function place(){
-  const { scale, dw, dh, ox, oy } = fit();
-  photo.style.width = dw + 'px';
+  const { scale, dw, dh, border, mx, my, ox, oy } = fit();
+
+  mount.style.left   = mx + 'px';
+  mount.style.top    = my + 'px';
+  mount.style.width  = (dw + 2 * border) + 'px';
+  mount.style.height = (dh + 2 * border) + 'px';
+
+  menuBtn.style.height = border + 'px';
+  photo.style.left   = border + 'px';
+  photo.style.top    = border + 'px';
+  photo.style.width  = dw + 'px';
   photo.style.height = dh + 'px';
-  photo.style.transform = `translate(${ox}px, ${oy}px)`;
 
   // touch devices get a 44px minimum target; the silhouette scales with the box
   const MIN = matchMedia('(pointer:coarse)').matches ? 44 : 0;
 
   live.forEach(s => {
-    let x = ox + s.bx * scale, y = oy + s.by * scale;
+    let x = border + s.bx * scale, y = border + s.by * scale;
     let w = s.bw * scale,      h = s.bh * scale;
     if (w < MIN) { x -= (MIN - w) / 2; w = MIN; }
     if (h < MIN) { y -= (MIN - h) / 2; h = MIN; }
@@ -312,8 +338,8 @@ function place(){
 
     // keep the label on screen: flip it below if it would clip the top,
     // nudge it sideways at the edges
-    s.el.classList.toggle('below', y < 44);
-    const centre = x + w / 2, pad = 86;
+    s.el.classList.toggle('below', my + y < 46);
+    const centre = mx + x + w / 2, pad = 86;
     const shift = centre < pad ? pad - centre
                 : centre > innerWidth - pad ? innerWidth - pad - centre : 0;
     s.el.style.setProperty('--tx', shift.toFixed(0) + 'px');
@@ -358,7 +384,7 @@ addEventListener('keydown', e => {
 });
 
 /* index fallback menu */
-document.getElementById('menuBtn').addEventListener('click', () => {
+menuBtn.addEventListener('click', () => {
   document.getElementById('pKicker').textContent = 'Everything on the sill';
   document.getElementById('pTitle').textContent  = 'Index';
   document.getElementById('pBody').innerHTML =
