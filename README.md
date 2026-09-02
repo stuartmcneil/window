@@ -57,7 +57,7 @@ straight off the image in any editor.
 | iPad on the desk | Books — Goodreads *(new tab)* |
 | Pen and stylus on the sill | Writing — Overleaf *(new tab)* |
 | USB drive on the sill | GitHub — @stuartmcneil *(new tab)* |
-| Upright headphone jack | Music — a panel: Discogs collection, Spotify playlist |
+| Upright headphone jack | Music — a panel: Discogs collection, Spotify playlist, Stux on Wax at `/Stux-on-Wax/` |
 | Red toy car | Cars *(panel, placeholder)* |
 | Handmade wooden table | Making *(panel, placeholder)* |
 | The window itself | Colophon *(panel)* |
