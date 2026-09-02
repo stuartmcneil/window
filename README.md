@@ -54,7 +54,7 @@ straight off the image in any editor.
 | Small white frame | The McNeil Family Tree at `/family-tree/` |
 | Far-left frame | Nate's Film Catalogue at `/films/` — *Nate as a baby* |
 | Second frame from the left | Izzie's Coffee Shops at `/izzies-coffee/` |
-| iPad on the desk | Books — Goodreads *(new tab)* |
+| iPad on the desk | Media — a panel: Books on Goodreads, Films at `/stuflix/` |
 | Pen and stylus on the sill | Writing — Overleaf *(new tab)* |
 | USB drive on the sill | GitHub — @stuartmcneil *(new tab)* |
 | Upright headphone jack | Music — a panel: Discogs collection, Spotify playlist, Stux on Wax at `/Stux-on-Wax/` |
@@ -63,7 +63,7 @@ straight off the image in any editor.
 | The window itself | Colophon *(panel)* |
 
 Everything on this site opens in the current tab; everything off it opens in a new one.
-Four objects still open a panel: Music, Cars, Making and the window.
+Five objects open a panel: Media, Music, Cars, Making and the window.
 
 Eight objects are catalogued but dormant at the bottom of the array — the pilea plant, the
 playing-card tin, the sailboat painting, the bicycle card, the jade plant, the flowering
