@@ -133,10 +133,8 @@
   var drag = null;
 
   stage.addEventListener('pointerdown', function (e) {
+    if (!inTitleBar(e) || e.button !== 0 || quitting) return;
     var r = stage.getBoundingClientRect();
-    var lx = e.clientX - r.left, ly = e.clientY - r.top;
-    var inTitle = lx >= TITLE.x0 && lx < TITLE.x1 && ly >= TITLE.y0 && ly < TITLE.y1;
-    if (!inTitle || e.button !== 0 || quitting) return;
     e.preventDefault();
     if (!EMBEDDED && stage.style.position !== 'absolute') {
       // leave the flex centring and pin the stage where it is now
@@ -149,8 +147,18 @@
     try { stage.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   });
 
+  function inTitleBar(e) {
+    var r = stage.getBoundingClientRect();
+    var lx = e.clientX - r.left, ly = e.clientY - r.top;
+    return lx >= TITLE.x0 && lx < TITLE.x1 && ly >= TITLE.y0 && ly < TITLE.y1;
+  }
+
   stage.addEventListener('pointermove', function (e) {
-    if (!drag) return;
+    if (!drag) {
+      // hovering the blue strip shows the finger so you know it can be dragged
+      stage.classList.toggle('grab', inTitleBar(e));
+      return;
+    }
     var dx = e.screenX - drag.x, dy = e.screenY - drag.y;
     if (!dx && !dy) return;
     drag = { x: e.screenX, y: e.screenY };
@@ -170,6 +178,7 @@
   }
   stage.addEventListener('pointerup', endDrag);
   stage.addEventListener('pointercancel', endDrag);
+  stage.addEventListener('pointerleave', function () { if (!drag) stage.classList.remove('grab'); });
 
   // ----------------------------------------------------------------- Ctrl+Q
   var quitting = false;

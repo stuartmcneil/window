@@ -70,8 +70,8 @@
   }
   .paper.back::after { display: none; }
 
-  /* the blue strip is a drag handle */
-  #stage.dragging { cursor: move; }
+  /* the blue strip is a drag handle: finger on hover, and while dragging */
+  #stage.grab, #stage.dragging { cursor: pointer; }
 
   /* Member 6: rich text, pre-rendered in Director */
   #tea   { left: 11px; top: 80px; }
