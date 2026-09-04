@@ -135,6 +135,16 @@
     max-width:min(560px,90vw);white-space:pre-wrap;
   }
   body.editing #readout{display:block}
+
+  /* ---------- WorkShy overlay (Media panel) ----------
+     The 1999 fake copy dialog, embedded transparent over the photograph.
+     Ctrl+Q inside it (or on the page) dismisses it. */
+  #workshy{
+    position:fixed;z-index:35;border:0;background:transparent;
+    width:384px;height:163px;left:50%;top:50%;transform:translate(-50%,-50%);
+    filter:drop-shadow(0 18px 40px rgba(0,0,0,.55));
+  }
+  body.open #workshy{pointer-events:none}
 </style>
 </head>
 <body>
@@ -199,6 +209,7 @@ const SPOTS = [
     body:`<ul>
       <li><a href="https://www.goodreads.com/review/list/91950832-stuart-mcneil?ref=nav_mybooks&shelf=read" target="_blank" rel="noopener"><b>Books</b><span>My shelf on Goodreads.</span></a></li>
       <li><a href="https://stuartmcneil.github.io/stuflix/"><b>Films</b><span>Stu Country for Old Men.</span></a></li>
+      <li><a href="#workshy" data-workshy><b>WorkShy</b><span>A 1999 Director gag, ported to JavaScript. Ctrl+Q to escape.</span></a></li>
     </ul>` },
 
   { id:'nate', object:'Nate as a baby', label:'Nate',
@@ -374,7 +385,33 @@ function openPanel(id){
 function bindJumps(){
   panel.querySelectorAll('[data-jump]').forEach(a =>
     a.addEventListener('click', ev => { ev.preventDefault(); openPanel(a.dataset.jump); }));
+  panel.querySelectorAll('[data-workshy]').forEach(a =>
+    a.addEventListener('click', ev => { ev.preventDefault(); closePanel(); openWorkshy(); }));
 }
+
+/* ------------- WorkShy overlay ------------- */
+let workshy = null;
+function openWorkshy(){
+  if (workshy) { workshy.contentWindow.focus(); return; }
+  workshy = document.createElement('iframe');
+  workshy.id = 'workshy';
+  workshy.src = 'workshy/';
+  workshy.title = 'WorkShy — press Ctrl+Q to close';
+  workshy.setAttribute('allowtransparency', 'true');
+  workshy.addEventListener('load', () => workshy && workshy.contentWindow.focus());
+  document.getElementById('stage').appendChild(workshy);
+  history.replaceState(null, '', '#workshy');
+}
+function closeWorkshy(){
+  if (!workshy) return;
+  workshy.remove(); workshy = null;
+  if (location.hash === '#workshy') history.replaceState(null, '', location.pathname);
+}
+/* the iframe tells us when its own Ctrl+Q has finished */
+addEventListener('message', e => {
+  if (e.origin !== location.origin) return;
+  if (e.data === 'workshy:quit') closeWorkshy();
+});
 function closePanel(){
   document.body.classList.remove('open');
   history.replaceState(null, '', location.pathname);
@@ -383,6 +420,10 @@ function closePanel(){
 document.getElementById('close').addEventListener('click', closePanel);
 document.getElementById('scrim').addEventListener('click', closePanel);
 addEventListener('keydown', e => {
+  // Ctrl+Q while WorkShy is up but the page has focus: pass it through to the dialog
+  if (workshy && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'q') {
+    e.preventDefault(); workshy.contentWindow.postMessage('workshy:quit', location.origin); return;
+  }
   if (e.key === 'Escape' && document.body.classList.contains('open')) closePanel();
   if (e.key.toLowerCase() === 'e' && !document.body.classList.contains('open')) document.body.classList.toggle('editing');
 });
@@ -401,7 +442,9 @@ menuBtn.addEventListener('click', () => {
 });
 
 /* deep links: site.com/#projects */
-if (location.hash) {
+if (location.hash === '#workshy') {
+  openWorkshy();
+} else if (location.hash) {
   const s = SPOTS.find(v => v.id === location.hash.slice(1));
   if (s && s.href) go(s.href); else if (s) openPanel(s.id);
 }
