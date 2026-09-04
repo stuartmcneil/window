@@ -125,27 +125,14 @@
 
   // ------------------------------------------------------------ title-bar drag
   // The blue strip across the top of the artwork (not the close box) drags the
-  // dialog. Standalone, the stage itself moves; embedded on the window page the
-  // parent is asked to move the overlay. screenX/Y are used so the maths still
-  // works while the frame we live in is moving under the pointer.
+  // dialog. Standalone, the stage moves itself with a transform, applied once per
+  // animation frame. Embedded on the window page, the movement is forwarded to
+  // the page (at most once per frame) and the page moves the overlay.
   var EMBEDDED = window.parent !== window;
   var TITLE = { x0: 0, x1: 362, y0: 0, y1: 18 };
   var drag = null;
-
-  stage.addEventListener('pointerdown', function (e) {
-    if (!inTitleBar(e) || e.button !== 0 || quitting) return;
-    var r = stage.getBoundingClientRect();
-    e.preventDefault();
-    if (!EMBEDDED && stage.style.position !== 'absolute') {
-      // leave the flex centring and pin the stage where it is now
-      stage.style.position = 'absolute';
-      stage.style.left = (r.left + window.scrollX) + 'px';
-      stage.style.top  = (r.top + window.scrollY) + 'px';
-    }
-    drag = { x: e.screenX, y: e.screenY };
-    stage.classList.add('dragging');
-    try { stage.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
-  });
+  var pos = { x: 0, y: 0 };       // standalone: accumulated offset from the pinned spot
+  var raf = null;
 
   function inTitleBar(e) {
     var r = stage.getBoundingClientRect();
@@ -153,28 +140,63 @@
     return lx >= TITLE.x0 && lx < TITLE.x1 && ly >= TITLE.y0 && ly < TITLE.y1;
   }
 
+  function paintPos() {
+    raf = null;
+    stage.style.transform = 'translate3d(' + pos.x + 'px,' + pos.y + 'px,0)';
+  }
+
+  var pending = null;
+  function post(msg) { try { window.parent.postMessage(msg, '*'); } catch (err) { /* ignore */ } }
+  function flush() { raf = null; if (pending) { post(pending); pending = null; } }
+
+  stage.addEventListener('pointerdown', function (e) {
+    if (!inTitleBar(e) || e.button !== 0 || quitting) return;
+    var r = stage.getBoundingClientRect();
+    e.preventDefault();
+    stage.classList.add('dragging');
+    if (EMBEDDED) {
+      // screenX/Y so the maths still works while the frame moves under the pointer
+      drag = { embedded: true, sx: e.screenX, sy: e.screenY };
+      try { stage.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      post({ type: 'workshy:dragstart' });
+      return;
+    }
+    if (stage.style.position !== 'absolute') {
+      // leave the flex centring and pin the stage where it is now
+      stage.style.position = 'absolute';
+      stage.style.left = (r.left + window.scrollX) + 'px';
+      stage.style.top  = (r.top + window.scrollY) + 'px';
+      stage.style.willChange = 'transform';
+    }
+    drag = { x: e.clientX, y: e.clientY, px: pos.x, py: pos.y };
+    try { stage.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  });
+
   stage.addEventListener('pointermove', function (e) {
     if (!drag) {
       // hovering the blue strip shows the finger so you know it can be dragged
       stage.classList.toggle('grab', inTitleBar(e));
       return;
     }
-    var dx = e.screenX - drag.x, dy = e.screenY - drag.y;
-    if (!dx && !dy) return;
-    drag = { x: e.screenX, y: e.screenY };
-    if (EMBEDDED) {
-      try { window.parent.postMessage({ type: 'workshy:move', dx: dx, dy: dy }, '*'); } catch (err) { /* ignore */ }
-    } else {
-      stage.style.left = (parseFloat(stage.style.left) + dx) + 'px';
-      stage.style.top  = (parseFloat(stage.style.top)  + dy) + 'px';
+    if (drag.embedded) {
+      // forward the total movement since the grab, at most once per frame
+      pending = { type: 'workshy:drag', dx: e.screenX - drag.sx, dy: e.screenY - drag.sy };
+      if (!raf) raf = requestAnimationFrame(flush);
+      return;
     }
+    pos.x = drag.px + (e.clientX - drag.x);
+    pos.y = drag.py + (e.clientY - drag.y);
+    if (!raf) raf = requestAnimationFrame(paintPos);
   });
 
   function endDrag(e) {
     if (!drag) return;
+    if (drag.embedded) { flush(); post({ type: 'workshy:dragend' }); }
     drag = null;
     stage.classList.remove('dragging');
-    try { stage.releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    if (e && e.pointerId !== undefined) {
+      try { stage.releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    }
   }
   stage.addEventListener('pointerup', endDrag);
   stage.addEventListener('pointercancel', endDrag);
@@ -209,7 +231,9 @@
 
   // The embedding page can also ask us to quit (it relays Ctrl+Q when it has focus)
   window.addEventListener('message', function (e) {
-    if (e.data === 'workshy:quit' && e.source === window.parent) quit();
+    if (e.source !== window.parent) return;
+    if (e.data === 'workshy:quit') quit();
+    if (e.data === 'workshy:dragend') { endDrag(null); stage.classList.remove('grab'); }
   });
 
   function onKey(e) {

@@ -142,9 +142,13 @@
   #workshy{
     position:fixed;z-index:35;border:0;background:transparent;
     width:384px;height:163px;left:50%;top:50%;transform:translate(-50%,-50%);
-    filter:drop-shadow(0 18px 40px rgba(0,0,0,.55));
+    will-change:transform;
   }
+  /* the dialog artwork is a plain rectangle, so a box-shadow (cheap) does the job
+     of a drop-shadow filter (re-rasterised every frame while dragging) */
+  #workshy.placed{left:0;top:0;box-shadow:0 18px 40px rgba(0,0,0,.55)}
   body.open #workshy{pointer-events:none}
+  body.wsdrag{cursor:pointer;user-select:none;-webkit-user-select:none}
 </style>
 </head>
 <body>
@@ -404,36 +408,54 @@ function openWorkshy(){
 }
 function closeWorkshy(){
   if (!workshy) return;
+  wsEnd();
   workshy.remove(); workshy = null;
   if (location.hash === '#workshy') history.replaceState(null, '', location.pathname);
 }
-/* the iframe tells us when its own Ctrl+Q has finished, and asks us to move
-   it when its title bar is dragged */
-addEventListener('message', e => {
-  if (e.origin !== location.origin) return;
-  if (e.data === 'workshy:quit') { closeWorkshy(); return; }
-  if (workshy && e.data && e.data.type === 'workshy:move') {
-    if (workshy.style.transform !== 'none') {
-      // first drag: swap the centred placement for explicit pixels
-      const r = workshy.getBoundingClientRect();
-      workshy.style.transform = 'none';
-      workshy.style.left = r.left + 'px';
-      workshy.style.top  = r.top + 'px';
-    }
-    const x = parseFloat(workshy.style.left) + e.data.dx;
-    const y = parseFloat(workshy.style.top)  + e.data.dy;
-    // keep at least the title bar on screen
-    workshy.style.left = Math.max(40 - 384, Math.min(innerWidth - 40, x)) + 'px';
-    workshy.style.top  = Math.max(0, Math.min(innerHeight - 20, y)) + 'px';
-  }
-});
-function closePanel(){
-  document.body.classList.remove('open');
-  history.replaceState(null, '', location.pathname);
-  if (lastFocus) lastFocus.focus();
+/* ---- WorkShy drag: the browser routes the whole mouse gesture to the frame
+   that received the mousedown, so the iframe forwards its movement (once per
+   frame, as a total offset since the grab) and this page positions the overlay
+   with a transform — no layout, no filter, nothing heavy per frame. ---- */
+let wsDrag = null, wsRaf = null, wsX = 0, wsY = 0;
+function wsPaint(){
+  wsRaf = null;
+  if (workshy) workshy.style.transform = `translate3d(${wsX}px,${wsY}px,0)`;
 }
-document.getElementById('close').addEventListener('click', closePanel);
-document.getElementById('scrim').addEventListener('click', closePanel);
+function wsStart(){
+  if (!workshy) return;
+  if (!workshy.classList.contains('placed')) {
+    const r = workshy.getBoundingClientRect();
+    wsX = r.left; wsY = r.top;
+    workshy.classList.add('placed');
+    wsPaint();
+  }
+  wsDrag = { x0: wsX, y0: wsY };
+  document.body.classList.add('wsdrag');
+}
+function wsMove(dx, dy){
+  if (!wsDrag) return;
+  // keep at least the title bar on screen
+  wsX = Math.max(40 - 384, Math.min(innerWidth - 40, wsDrag.x0 + dx));
+  wsY = Math.max(0, Math.min(innerHeight - 20, wsDrag.y0 + dy));
+  if (!wsRaf) wsRaf = requestAnimationFrame(wsPaint);
+}
+function wsEnd(){
+  if (!wsDrag) return;
+  wsDrag = null;
+  document.body.classList.remove('wsdrag');
+}
+addEventListener('blur', wsEnd);
+
+/* messages from the iframe: Ctrl+Q finished, and the title-bar drag */
+addEventListener('message', e => {
+  if (e.origin !== location.origin || !workshy) return;
+  const d = e.data;
+  if (d === 'workshy:quit') { closeWorkshy(); return; }
+  if (!d || !d.type) return;
+  if (d.type === 'workshy:dragstart') wsStart();
+  else if (d.type === 'workshy:drag') wsMove(d.dx, d.dy);
+  else if (d.type === 'workshy:dragend') wsEnd();
+});
 addEventListener('keydown', e => {
   // Ctrl+Q while WorkShy is up but the page has focus: pass it through to the dialog
   if (workshy && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'q') {
