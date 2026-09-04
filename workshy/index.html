@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WorkShy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* The original stage was white; here everything outside the dialog artwork is
+     transparent so the page can sit on top of stuartmcneil.github.io/window/ */
+  html, body { margin: 0; height: 100%; background: transparent; }
+  body { display: flex; align-items: center; justify-content: center; }
+  #stage {
+    position: relative;
+    width: 384px; height: 163px;
+    overflow: hidden;
+    background: transparent;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    image-rendering: pixelated;
+  }
+  #stage > * { position: absolute; }
+  #bk    { left: -2px; top: -1px; width: 385px; height: 163px; }   /* sprite 1: "pc bar bk", stretched 385x163 */
+  .bar   { top: 126px; height: 8px; background: #000080; }         /* member 2: solid navy bitmap, stretched */
+  #txt   {                                                          /* member 4: field "txt" */
+    left: 40px; top: 100px; width: 263px; height: 14px;
+    font: 12px/14px "Courier New", Courier, monospace;
+    color: #000; white-space: nowrap; overflow: hidden;
+  }
+  #tea   { left: 11px; top: 80px; }                                 /* member 6: rich text, pre-rendered in Director */
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <img id="bk"  src="pc_bar_bk.png" alt="" draggable="false">
+    <div id="bar2" class="bar"></div>
+    <div id="bar3" class="bar"></div>
+    <div id="txt"></div>
+    <img id="tea" src="tea_text.png" alt="Did you have a nice cup of tea? inabit..stuart" draggable="false" hidden>
+  </div>
+  <script src="workshy.js"></script>
+</body>
+</html>
