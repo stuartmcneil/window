@@ -17,25 +17,64 @@
     cursor: default;
     user-select: none;
     -webkit-user-select: none;
+    outline: none;
     image-rendering: pixelated;
   }
   #stage > * { position: absolute; }
   #bk    { left: -2px; top: -1px; width: 385px; height: 163px; }   /* sprite 1: "pc bar bk", stretched 385x163 */
-  .bar   { top: 126px; height: 8px; background: #000080; }         /* member 2: solid navy bitmap, stretched */
-  #txt   {                                                          /* member 4: field "txt" */
+
+  /* Progress trough: blocks fill from the left, one at a time */
+  #bar   { left: 16px; top: 126px; width: 282px; height: 8px; }
+  #bar > i {
+    position: absolute; top: 0; height: 8px; width: 8px;
+    background: #000080;                                            /* member 2's navy */
+    visibility: hidden;
+  }
+  #bar > i.on { visibility: visible; }
+
+  /* Status line (member 4: field "txt") */
+  #txt   {
     left: 40px; top: 100px; width: 263px; height: 14px;
     font: 12px/14px "Courier New", Courier, monospace;
     color: #000; white-space: nowrap; overflow: hidden;
   }
-  #tea   { left: 11px; top: 80px; }                                 /* member 6: rich text, pre-rendered in Director */
+
+  /* Sheets of paper flying from the left folder to the right one */
+  #papers { left: 0; top: 0; width: 384px; height: 100px; pointer-events: none; }
+  .paper {
+    position: absolute; left: 0; top: 0;
+    width: 10px; height: 12px;
+    background: #fff;
+    border: 1px solid #404040;
+    box-sizing: border-box;
+    /* three little "text" lines drawn with a gradient so there is no extra markup */
+    background-image: repeating-linear-gradient(to bottom, transparent 0 2px, #808080 2px 3px, transparent 3px 4px);
+    background-size: 6px 100%;
+    background-repeat: no-repeat;
+    background-position: 1px 2px;
+    animation: fly 1.8s linear forwards;
+  }
+  @keyframes fly {
+    0%   { transform: translate(38px, 62px) rotate(0deg);   opacity: 0; }
+    8%   { opacity: 1; }
+    25%  { transform: translate(90px, 40px) rotate(6deg); }
+    50%  { transform: translate(148px, 30px) rotate(0deg); }
+    75%  { transform: translate(206px, 40px) rotate(-6deg); }
+    92%  { opacity: 1; }
+    100% { transform: translate(258px, 62px) rotate(0deg); opacity: 0; }
+  }
+
+  /* Member 6: rich text, pre-rendered in Director */
+  #tea   { left: 11px; top: 80px; }
+
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
-  <div id="stage">
+  <div id="stage" tabindex="0" aria-label="Copying… press Ctrl+Q to close">
     <img id="bk"  src="pc_bar_bk.png" alt="" draggable="false">
-    <div id="bar2" class="bar"></div>
-    <div id="bar3" class="bar"></div>
+    <div id="papers"></div>
+    <div id="bar"></div>
     <div id="txt"></div>
     <img id="tea" src="tea_text.png" alt="Did you have a nice cup of tea? inabit..stuart" draggable="false" hidden>
   </div>
