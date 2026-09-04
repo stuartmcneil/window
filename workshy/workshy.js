@@ -4,7 +4,9 @@
  * Revised behaviour (2026):
  *   - the progress bar fills one block at a time, six blocks a second, then
  *     empties and starts again — forever;
- *   - sheets of paper fly from the left folder to the right one;
+ *   - a sheet of paper hops from the left folder to the right one, one at a time,
+ *     turning over as it goes, in stepped frames at 6 a second;
+ *   - the dialog can be dragged around by its blue title strip;
  *   - the status line still cycles through the original Lingo messages with the
  *     original one-in-eight odds per message, one roll every two seconds;
  *   - mouse clicks do nothing. Ctrl+Q is the only way out: it shows the original
@@ -21,7 +23,6 @@
   var BLOCK_W      = 8;      // block width in px
   var BLOCK_GAP    = 2;      // gap between blocks
   var TROUGH_W     = 282;    // inside of the trough, x 16..298 on the stage
-  var PAPER_EVERY  = 1000 / 6;   // six sheets a second leave the left folder
   var TEA_MS       = 3000;   // how long the tea message stays before closing
 
   // ------------------------------------------------------------ Lingo helpers
@@ -83,14 +84,92 @@
   }
 
   // ----------------------------------------------------------- flying paper
+  // One sheet in flight at a time, stepped through these frames at PAPER_FPS.
+  // Each frame is [x, y, flip]: x/y are the sheet's top-left on the stage and
+  // flip is the horizontal scale, so 1 is face-on, 0 is edge-on and -1 is the
+  // back of the sheet. The sheet turns over once on the way across.
+  // Folders sit at roughly x 20-52 (left) and x 244-276 (right).
+  var PAPER_FPS = 6;
+  var PATH = [
+    [36, 52,  1.0],
+    [52, 40,  0.8],
+    [72, 30,  0.4],
+    [96, 22,  0.0],
+    [122, 16, -0.5],
+    [150, 14, -1.0],
+    [178, 14, -0.9],
+    [206, 17, -0.4],
+    [230, 24,  0.1],
+    [250, 33,  0.6],
+    [264, 44,  0.9],
+    [272, 54,  1.0]
+  ];
+  var sheet = document.createElement('div');
+  sheet.className = 'paper';
+  papers.appendChild(sheet);
+  var paperFrame = 0;
   var paperTimer = null;
-  function launchPaper() {
-    var p = document.createElement('div');
-    p.className = 'paper';
-    papers.appendChild(p);
-    p.addEventListener('animationend', function () { p.remove(); });
-    paperTimer = setTimeout(launchPaper, PAPER_EVERY);
+
+  function paperTick() {
+    var f = PATH[paperFrame];
+    var flip = f[2];
+    // never let the sheet vanish completely when edge-on
+    var sx = Math.abs(flip) < 0.12 ? (flip < 0 ? -0.12 : 0.12) : flip;
+    sheet.style.transform = 'translate(' + f[0] + 'px,' + f[1] + 'px) scaleX(' + sx + ')';
+    sheet.className = 'paper' + (flip < 0 ? ' back' : '');
+    // hidden on the two end frames so the sheet looks like it is inside a folder
+    sheet.style.visibility = (paperFrame === 0 || paperFrame === PATH.length - 1) ? 'hidden' : 'visible';
+    paperFrame = (paperFrame + 1) % PATH.length;   // lands, and the next sheet sets off
+    paperTimer = setTimeout(paperTick, 1000 / PAPER_FPS);
   }
+
+  // ------------------------------------------------------------ title-bar drag
+  // The blue strip across the top of the artwork (not the close box) drags the
+  // dialog. Standalone, the stage itself moves; embedded on the window page the
+  // parent is asked to move the overlay. screenX/Y are used so the maths still
+  // works while the frame we live in is moving under the pointer.
+  var EMBEDDED = window.parent !== window;
+  var TITLE = { x0: 0, x1: 362, y0: 0, y1: 18 };
+  var drag = null;
+
+  stage.addEventListener('pointerdown', function (e) {
+    var r = stage.getBoundingClientRect();
+    var lx = e.clientX - r.left, ly = e.clientY - r.top;
+    var inTitle = lx >= TITLE.x0 && lx < TITLE.x1 && ly >= TITLE.y0 && ly < TITLE.y1;
+    if (!inTitle || e.button !== 0 || quitting) return;
+    e.preventDefault();
+    if (!EMBEDDED && stage.style.position !== 'absolute') {
+      // leave the flex centring and pin the stage where it is now
+      stage.style.position = 'absolute';
+      stage.style.left = (r.left + window.scrollX) + 'px';
+      stage.style.top  = (r.top + window.scrollY) + 'px';
+    }
+    drag = { x: e.screenX, y: e.screenY };
+    stage.classList.add('dragging');
+    try { stage.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  });
+
+  stage.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    var dx = e.screenX - drag.x, dy = e.screenY - drag.y;
+    if (!dx && !dy) return;
+    drag = { x: e.screenX, y: e.screenY };
+    if (EMBEDDED) {
+      try { window.parent.postMessage({ type: 'workshy:move', dx: dx, dy: dy }, '*'); } catch (err) { /* ignore */ }
+    } else {
+      stage.style.left = (parseFloat(stage.style.left) + dx) + 'px';
+      stage.style.top  = (parseFloat(stage.style.top)  + dy) + 'px';
+    }
+  });
+
+  function endDrag(e) {
+    if (!drag) return;
+    drag = null;
+    stage.classList.remove('dragging');
+    try { stage.releasePointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+  }
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
 
   // ----------------------------------------------------------------- Ctrl+Q
   var quitting = false;
@@ -142,5 +221,5 @@
   setBlocks(0);
   stepTimer  = setTimeout(step, STEP_MS);
   statusTimer = setTimeout(statusTick, STATUS_MS);
-  paperTimer = setTimeout(launchPaper, 400);
+  paperTick();
 })();

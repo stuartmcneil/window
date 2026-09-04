@@ -407,10 +407,25 @@ function closeWorkshy(){
   workshy.remove(); workshy = null;
   if (location.hash === '#workshy') history.replaceState(null, '', location.pathname);
 }
-/* the iframe tells us when its own Ctrl+Q has finished */
+/* the iframe tells us when its own Ctrl+Q has finished, and asks us to move
+   it when its title bar is dragged */
 addEventListener('message', e => {
   if (e.origin !== location.origin) return;
-  if (e.data === 'workshy:quit') closeWorkshy();
+  if (e.data === 'workshy:quit') { closeWorkshy(); return; }
+  if (workshy && e.data && e.data.type === 'workshy:move') {
+    if (workshy.style.transform !== 'none') {
+      // first drag: swap the centred placement for explicit pixels
+      const r = workshy.getBoundingClientRect();
+      workshy.style.transform = 'none';
+      workshy.style.left = r.left + 'px';
+      workshy.style.top  = r.top + 'px';
+    }
+    const x = parseFloat(workshy.style.left) + e.data.dx;
+    const y = parseFloat(workshy.style.top)  + e.data.dy;
+    // keep at least the title bar on screen
+    workshy.style.left = Math.max(40 - 384, Math.min(innerWidth - 40, x)) + 'px';
+    workshy.style.top  = Math.max(0, Math.min(innerHeight - 20, y)) + 'px';
+  }
 });
 function closePanel(){
   document.body.classList.remove('open');
